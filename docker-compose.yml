@@ -1,0 +1,50 @@
+version: "3.7"
+services:
+  app:
+    container_name: notif_app
+    build:
+      context: .
+    ports:
+      - ${PORT}:8000
+    environment:
+      - .env
+      - PORT=${PORT}
+#      - EMAIL=${EMAIL}
+#      - DB_URI=${DB_URI}
+#      - REDIS_URI=${REDIS_URI}
+#      - SMTP_HOST=${SMTP_HOST}
+#      - SMTP_PORT=${SMTP_PORT}
+#      - SMTP_LOGIN=${SMTP_LOGIN}
+#      - SMTP_PASSWORD=${SMTP_PASSWORD}
+#      - SMTP_EMAIL=${SMTP_EMAIL}
+#      - SMTP_NAME=${SMTP_NAME}
+
+    depends_on:
+      - nosql_db
+      - redis_db
+      - celery
+
+  nosql_db:
+    image: mongo
+    ports:
+      - "27017:27017"
+    expose:
+      - 27017
+
+  redis_db:
+    container_name: redis_app
+    image: redis/redis-stack
+    ports:
+      - "6379:6379"
+    expose:
+      - 6379
+
+  celery:
+    build:
+      context: .
+    container_name: celery_app
+    command: celery --app=tasks:celery worker -l INFO
+    environment:
+      - .env
+    depends_on:
+      - redis_db
